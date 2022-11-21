@@ -1,4 +1,4 @@
-# Prompt Learning for Vision-Language Models
+# Multitask Prompt Learning for Vision-Language Models
 
 This repo contains the codebase of a series of research projects focused on adapting vision-language models like [CLIP](https://arxiv.org/abs/2103.00020) to downstream datasets via *prompt learning*:
 
@@ -20,7 +20,7 @@ Click a paper below to see the detailed instructions on how to run the code to r
 
 ## Models and Results
 
-- The pre-trained weights of MVLPT (MCoOp, MVPT, MUPT) on 11 tasks based on ViT-B/16 and ViT-B/32 can be downloaded altogether via this [link](https://drive.google.com/file/d/18ypxfd82RR0pizc5MM1ZWDYDk4j0BtPF/view?usp=sharing). The weights can be used to reproduce the results in Table 1 of MVLPT's paper (i.e., the results on ImageNet and its four variants with domain shift). To load the weights and run the evaluation code, you will need to specify `--model-dir` and `--load-epoch` (see this [script](https://github.com/sIncerass/MVLPT/blob/main/scripts/mvlpt/main_single_elevater_cut.sh) for example).
+- The pre-trained weights of MVLPT (MCoOp, MVPT, MUPT) on 11 tasks based on ViT-B/16 and ViT-B/32 can be downloaded altogether via this [link](https://drive.google.com/file/d/1YWVLsVcsTEP_z3ehIDgGpFTNalTG_1IE/view?usp=sharing). The weights can be used to reproduce the results in Table 1 of MVLPT's paper (i.e., the results on ImageNet and its four variants with domain shift). To load the weights and run the evaluation code, you will need to specify `--model-dir` and `--load-epoch` (see this [script](https://github.com/sIncerass/MVLPT/blob/main/scripts/mvlpt/main_single_elevater_cut.sh) for example).
 
 ## Citation
 If you use this code in your research, please kindly cite the following papers

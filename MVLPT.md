@@ -30,7 +30,7 @@ All you need is `MVLPT/scripts/mvlpt/main_single_elevator_cut.sh`, which contain
 
 `DATASET` takes as input a dataset name, like `cifar-10` or `country211`. The valid names are the files' names in `MVLPT/trainer/vision_benchmark/resources/datasets`.
 
-`MODEL_DIR="--model-dir YOUR_PATH_TO_PRETRAIN_PROMPT_MODEL"` means the directory that contains the pretrained source prompt, it could be gained via `scripts/avg_ckpt.py` to average between your runs with three seeds or from our pretrained gdrive [link](https://drive.google.com/file/d/18ypxfd82RR0pizc5MM1ZWDYDk4j0BtPF/view?usp=sharing). 
+`MODEL_DIR="--model-dir YOUR_PATH_TO_PRETRAIN_PROMPT_MODEL"` means the directory that contains the pretrained source prompt, it could be gained via `scripts/avg_ckpt.py` to average between your runs with three seeds or from our pretrained gdrive [link](https://drive.google.com/file/d/1YWVLsVcsTEP_z3ehIDgGpFTNalTG_1IE/view?usp=sharing). 
 
 Below we provide examples on how to run MVLPT. 
 
