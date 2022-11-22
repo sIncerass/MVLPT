@@ -1,20 +1,20 @@
 ## How to Run
 
-We provide the running scripts in `scripts/mvlpt`, which allow you to reproduce the results on the MVLPT paper.
+We provide the running scripts in `scripts/mvlpt`, which allow you to reproduce the results on the [MVLPT](https://arxiv.org/pdf/2211.11720.pdf) paper.
 
 Make sure you change the path in `DATA` and run the commands under the main directory `MVLPT/`.
 
-### Multitask Source Prompt Initialization
+## Multitask Prompt Initialization & Adaptation
 
 All you need is `MVLPT/scripts/mvlpt/main_mt_coopdata_cut.sh` or `MVLPT/scripts/mvlpt/main_mt_elevater_cut.sh`, which contains five input arguments.
 
-`MVLPT/scripts/mvlpt/main_mt_coopdata_cut.sh` uses 11 tasks from `CoOp` as source tasks, 
+`MVLPT/scripts/mvlpt/main_mt_coopdata_cut.sh` uses 11 tasks from [CoOp](https://github.com/KaiyangZhou/CoOp/tree/main/datasets) as source tasks, 
 
-`MVLPT/scripts/mvlpt/main_mt_elevater_cut.sh` uses 20 tasks from `ELEVATER` as source tasks (the data for `ELEVATER` will be downloaded automatically), 
+`MVLPT/scripts/mvlpt/main_mt_elevater_cut.sh` uses 20 tasks from [ELEVATER](https://arxiv.org/pdf/2204.08790.pdf) as source tasks (the data for `ELEVATER` will be downloaded automatically), 
 
 You can also adjust the `DATASET` for source tasks. 
 
-`TRAINER` means the TRAINER method (`CoOp, VPT, UPT`) to run the prompt learning. 
+`TRAINER` means the TRAINER method (`CoOp, VPT, UPT`) to run different prompt learning methods. 
 
 `CFG` means which config file to use, such as `vit_b16`, `vit_b32` or `vit_l14` (see `MVLPT/configs/trainers/MVLPT/`). Note that in the paper, we use `MVLPT/configs/trainers/MVLPT/vit_b16.yaml` for all settings (please follow the implementation details shown in the paper).
 
@@ -24,15 +24,15 @@ You can also adjust the `DATASET` for source tasks.
 
 `SEED` means the random seed. 
 
-### Single-task Few-Shot Learning
+## Single-task Few-Shot Prompt Learning
 
 All you need is `MVLPT/scripts/mvlpt/main_single_elevator_cut.sh`, which contains six input arguments.
 
-`DATASET` takes as input a dataset name, like `cifar-10` or `country211`. The valid names are the files' names in `MVLPT/trainer/vision_benchmark/resources/datasets`.
+`DATASET` takes as input a dataset name, like `cifar-10` or `country211` from [ELEVATER](https://arxiv.org/pdf/2204.08790.pdf) bechmark. The valid names are the files' names in `MVLPT/trainer/vision_benchmark/resources/datasets`.
 
-`MODEL_DIR="--model-dir YOUR_PATH_TO_PRETRAIN_PROMPT_MODEL"` means the directory that contains the pretrained source prompt, it could be gained via `scripts/avg_ckpt.py` to average between your runs with three seeds or from our pretrained gdrive [link](https://drive.google.com/file/d/1YWVLsVcsTEP_z3ehIDgGpFTNalTG_1IE/view?usp=sharing). 
+`MODEL_DIR="--model-dir YOUR_PATH_TO_PRETRAIN_PROMPT_MODEL"` means the directory that contains the pretrained source prompt, it could be gained via `scripts/avg_ckpt.py` to average between your runs with three seeds or from our pretrained [gdrive link](https://drive.google.com/file/d/1YWVLsVcsTEP_z3ehIDgGpFTNalTG_1IE/view?usp=sharing). 
 
-Below we provide examples on how to run MVLPT. 
+Below we provide examples on how to run [MVLPT](https://arxiv.org/pdf/2211.11720.pdf). 
 
 **MCoOp (M=16)**:
 - 1 shot (seed 1) source: `CUDA_VISIBLE_DEVICES=0 bash scripts/mvlpt/main_mt_coopdata_cut.sh CoOp vit_b16 16 1 1`

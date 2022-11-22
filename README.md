@@ -1,17 +1,18 @@
 # Multitask Prompt Learning for Vision-Language Models
 
-This repo contains the codebase of a series of research projects focused on adapting vision-language models like [CLIP](https://arxiv.org/abs/2103.00020) to downstream datasets via *prompt learning*:
+This repo contains the codebase of a series of research projects focused on adapting vision-language models like [CLIP](https://arxiv.org/abs/2103.00020) to downstream datasets via *multitask prompt learning*:
 
-* [Multitask Vision-Language Prompt Tuning]()
+* [Multitask Vision-Language Prompt Tuning](https://arxiv.org/pdf/2211.11720.pdf)
 
 ## How to Install
-This code is built on top of the toolbox [Dassl.pytorch](https://github.com/KaiyangZhou/Dassl.pytorch) and [CoOp](https://github.com/KaiyangZhou/CoOp) so you need to install the `dassl` environment first. Simply follow the instructions described [here](https://github.com/KaiyangZhou/Dassl.pytorch#installation) to install `dassl` as well as PyTorch. After that, run `pip install -r requirements.txt` under `MVLPT/` to install a few more packages required by [CLIP](https://github.com/openai/CLIP) (this should be done when `dassl` is activated). Then, you are ready to go.
+This code is built on top of the toolbox [Dassl.pytorch](https://github.com/KaiyangZhou/Dassl.pytorch) and [CoOp](https://github.com/KaiyangZhou/CoOp) so you need to install the [`dassl`](https://github.com/KaiyangZhou/Dassl.pytorch#installation) and [PyTorch](https://pytorch.org/) environment first. After that, run `pip install -r requirements.txt` under `MVLPT/` to install a few more packages required by [CLIP](https://github.com/openai/CLIP) (this should be done when `dassl` is activated). Then, you are ready to go.
 
-Follow [DATASETS.md](DATASETS.md) to install the datasets or run after install `gdown`. 
+Follow [DATASETS.md](DATASETS.md) to install the datasets from [CoOp](https://github.com/KaiyangZhou/CoOp/tree/main/datasets) for multitask source prompt initialization or run the following script after install `gdown`. 
 ```bash
 bash scripts/data.sh
 ```
 
+Note that the dataset for target [ELEVATER](https://arxiv.org/pdf/2204.08790.pdf) benchmark will be downloaded automatically in `MVLPT/trainers/vision_benchmark/`. 
 ## How to Run
 
 Click a paper below to see the detailed instructions on how to run the code to reproduce the results.
@@ -26,10 +27,10 @@ Click a paper below to see the detailed instructions on how to run the code to r
 If you use this code in your research, please kindly cite the following papers
 
 ```bash
-@inproceedings{shen2022mvlpt,
+@article{shen2022mvlpt,
     title={Multitask Vision-Language Prompt Tuning},
-    author={Shen, Sheng and Yang, Shijia and Zhang, Tianjun and Zhai, Bohan and Gonzalez, Joseph E. and Keutzer, Kurt and Darrell, Trevor},
-    booktitle={arxiv},
+    author = {Shen, Sheng and Yang, Shijia and Zhang, Tianjun and Zhai, Bohan and Gonzalez, Joseph E. and Keutzer, Kurt and Darrell, Trevor},
+    journal={arXiv preprint arXiv:2211.11720},
     year={2022}
 }
 ```

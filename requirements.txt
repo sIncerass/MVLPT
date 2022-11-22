@@ -12,14 +12,12 @@ einops==0.3.0
 pyarrow==2.0.0
 sacred==0.8.2
 pandas==1.1.5
-fairscale==0.4.0
 git+https://github.com/rwightman/pytorch-image-models.git
 scipy
 tensorboardX
 opencv-python
 datasets
 nltk
-git+https://github.com/microsoft/tutel@main
 git+https://github.com/KaiyangZhou/Dassl.pytorch.git
 vision_datasets
 gdown
