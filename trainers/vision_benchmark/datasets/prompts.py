@@ -3267,7 +3267,7 @@ class_map_metric = {
     'voc-2007-classification': "11point_mAP", #'accuracy',
     'oxford-iiit-pets': 'mean-per-class',
     'eurosat_clip': 'accuracy',
-    'hateful-memes': 'roc_auc', #'accuracy',
+    'hateful-memes': 'accuracy',
     'rendered-sst2': 'accuracy',
     'dtd': 'accuracy',
     'fer-2013': 'accuracy',

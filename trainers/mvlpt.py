@@ -1,4 +1,5 @@
 import os.path as osp
+from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -140,14 +141,19 @@ class MultitaskVLPromptLearner(nn.Module):
         # DEFAULT is VPT
         n_cls = len(classnames)
         coop_n_ctx = cfg.TRAINER.MVLPT.COOP.N_CTX
+        cocoop_n_ctx = cfg.TRAINER.MVLPT.COCOOP.N_CTX
         vpt_n_ctx = cfg.TRAINER.MVLPT.VPT.N_CTX
 
         coop_ctx_init = cfg.TRAINER.MVLPT.COOP.CTX_INIT
+        cocoop_ctx_init = cfg.TRAINER.MVLPT.COCOOP.CTX_INIT
         vpt_ctx_init = cfg.TRAINER.MVLPT.VPT.CTX_INIT
 
         dtype = clip_model.dtype
         coop_ctx_dim = clip_model.ln_final.weight.shape[0]
+        cocoop_ctx_dim = coop_ctx_dim
         vpt_ctx_dim = clip_model.visual.conv1.weight.shape[0]
+
+        vis_dim = clip_model.visual.output_dim
 
         # HACK: this is for VisualTransformer model
         clip_patchsize = clip_model.visual.conv1.weight.shape[-1]
@@ -251,6 +257,37 @@ class MultitaskVLPromptLearner(nn.Module):
                     self.mvlpt_proj = Transformer(width=self.mvlpt_proj_ctx_dim, layers=1, heads=1)
                     # for n, m in self.MVLPT_proj.named_modules():
                     #     m.type(dtype)
+        self.cocoop_ctx = None
+        if cocoop_n_ctx != 0:
+            if cocoop_ctx_init:
+                # use given words to initialize context vectors
+                cocoop_ctx_init = cocoop_ctx_init.replace("_", " ")
+                cocoop_n_ctx = len(cocoop_ctx_init.split(" "))
+                prompt = clip.tokenize(cocoop_ctx_init)
+                with torch.no_grad():
+                    embedding = clip_model.token_embedding(prompt).type(dtype)
+                ctx_vectors = embedding[0, 1 : 1 + cocoop_n_ctx, :]
+                prompt_prefix = cocoop_ctx_init
+            else:
+                # random initialization
+                ctx_vectors = torch.empty(cocoop_n_ctx, cocoop_ctx_dim, dtype=dtype)
+                nn.init.normal_(ctx_vectors, std=0.02)
+                prompt_prefix = " ".join(["X"] * cocoop_n_ctx)
+
+            print(f'Initial context: "{prompt_prefix}"')
+            print(f"Number of context words (tokens): {cocoop_n_ctx}")
+
+            self.cocoop_ctx = nn.Parameter(ctx_vectors)
+
+            self.meta_net = nn.Sequential(OrderedDict([
+                ("linear1", nn.Linear(vis_dim, vis_dim // 16)),
+                ("relu", nn.ReLU(inplace=True)),
+                ("linear2", nn.Linear(vis_dim // 16, cocoop_ctx_dim))
+            ]))
+            
+            if cfg.TRAINER.MVLPT.COCOOP.PREC == "fp16":
+                self.meta_net.half()
+
 
         classnames = [name.replace("_", " ") for name in classnames]
         name_lens = [len(_tokenizer.encode(name)) for name in classnames]
@@ -273,15 +310,68 @@ class MultitaskVLPromptLearner(nn.Module):
         # but they should be ignored in load_model() as we want to use
         # those computed using the current class names
         self.register_buffer("token_prefix", embedding[:, :1, :])  # SOS
-        self.register_buffer("token_suffix", embedding[:, 1 + coop_n_ctx :, :])  # CLS, EOS
+        if cocoop_n_ctx != 0:
+            self.register_buffer("token_suffix", embedding[:, 1 + cocoop_n_ctx :, :])  # CLS, EOS
+        else:
+            self.register_buffer("token_suffix", embedding[:, 1 + coop_n_ctx :, :])  # CLS, EOS
 
         self.n_cls = n_cls
         self.vpt_n_ctx = vpt_n_ctx
         self.coop_n_ctx = coop_n_ctx
+        self.cocoop_n_ctx = cocoop_n_ctx
 
         self.tokenized_prompts = tokenized_prompts  # torch.Tensor
         self.name_lens = name_lens
         self.class_token_position = cfg.TRAINER.MVLPT.COOP.CLASS_TOKEN_POSITION
+
+    def construct_prompts(self, ctx, prefix, suffix, label=None):
+        # dim0 is either batch_size (during training) or n_cls (during testing)
+        # ctx: context tokens, with shape of (dim0, n_ctx, ctx_dim)
+        # prefix: the sos token, with shape of (n_cls, 1, ctx_dim)
+        # suffix: remaining tokens, with shape of (n_cls, *, ctx_dim)
+
+        if label is not None:
+            prefix = prefix[label]
+            suffix = suffix[label]
+
+        prompts = torch.cat(
+            [
+                prefix,  # (dim0, 1, dim)
+                ctx,     # (dim0, n_ctx, dim)
+                suffix,  # (dim0, *, dim)
+            ],
+            dim=1,
+        )
+
+        return prompts
+
+    def forward_cocoop(self, im_features):
+        prefix = self.token_prefix
+        suffix = self.token_suffix
+        ctx = self.cocoop_ctx                     # (n_ctx, ctx_dim)
+        if ctx is None:
+            prompts = torch.cat(
+                [
+                    prefix,  # (n_cls, 1, dim)
+                    suffix,  # (n_cls, *, dim)
+                ],
+                dim=1,
+            )
+            return prompts
+        bias = self.meta_net(im_features)  # (batch, ctx_dim)
+        bias = bias.unsqueeze(1)           # (batch, 1, ctx_dim)
+        ctx = ctx.unsqueeze(0)             # (1, n_ctx, ctx_dim)
+        ctx_shifted = ctx + bias           # (batch, n_ctx, ctx_dim)
+        
+        # Use instance-conditioned context tokens for all classes
+        prompts = []
+        for ctx_shifted_i in ctx_shifted:
+            ctx_i = ctx_shifted_i.unsqueeze(0).expand(self.n_cls, -1, -1)
+            pts_i = self.construct_prompts(ctx_i, prefix, suffix)  # (n_cls, n_tkn, ctx_dim)
+            prompts.append(pts_i)
+        prompts = torch.stack(prompts)
+        
+        return prompts
 
     def forward_mvlpt_proj(self, dtype=torch.float):
         if self.coop_n_ctx == 0 or isinstance(self.mvlpt_proj, nn.Identity) or self.vpt_n_ctx == 0:
@@ -452,16 +542,33 @@ class CustomCLIP(nn.Module):
 
         image_features = self.image_encoder(image.type(self.dtype), vpt_emb, vpt_emb_deep)
 
-        prompts = self.prompt_learner.forward_coop(coop_emb)
-        tokenized_prompts = self.tokenized_prompts
-        text_features = self.text_encoder(prompts, tokenized_prompts)
+        if self.prompt_learner.cocoop_ctx == None:
+            prompts = self.prompt_learner.forward_coop(coop_emb)
+            tokenized_prompts = self.tokenized_prompts
+            text_features = self.text_encoder(prompts, tokenized_prompts)
 
-        image_features = image_features / image_features.norm(dim=-1, keepdim=True)
-        text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+            image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+            text_features = text_features / text_features.norm(dim=-1, keepdim=True)
 
-        logit_scale = self.logit_scale.exp()
-        logits = logit_scale * image_features @ text_features.t()
+            logit_scale = self.logit_scale.exp()
+            logits = logit_scale * image_features @ text_features.t()
 
+        else:
+
+            tokenized_prompts = self.tokenized_prompts
+            logit_scale = self.logit_scale.exp()
+
+            image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+
+            prompts = self.prompt_learner.forward_cocoop(image_features)
+            
+            logits = []
+            for pts_i, imf_i in zip(prompts, image_features):
+                text_features = self.text_encoder(pts_i, tokenized_prompts)
+                text_features = text_features / text_features.norm(dim=-1, keepdim=True)
+                l_i = logit_scale * imf_i @ text_features.t()
+                logits.append(l_i)
+            logits = torch.stack(logits)
 
         if self.multi_task_label_pertask:
             # Here we perform prompt selection
@@ -1001,9 +1108,12 @@ class MVLPT(TrainerX):
 
             checkpoint = load_checkpoint(model_path)
             state_dict = checkpoint["state_dict"]
+            # issue 1 bug fix for UPT key name mismatch
+            state_dict = {k.replace("upt_proj", "mvlpt_proj"):v for k, v in state_dict.items()}
             epoch = checkpoint["epoch"]
 
             # Ignore fixed token vectors
+
             if "token_prefix" in state_dict:
                 del state_dict["token_prefix"]
 

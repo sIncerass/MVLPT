@@ -133,7 +133,7 @@ def extend_cfg(cfg):
     cfg.TRAINER.MVLPT.PROJECT_DIM = 128 # if coop/vpt dimension doesnot match, project to vpt/coop
 
     cfg.TRAINER.MVLPT.VPT = CN()
-    cfg.TRAINER.MVLPT.VPT.N_CTX = 16  # number of context vectors
+    cfg.TRAINER.MVLPT.VPT.N_CTX = 0  # number of context vectors
     cfg.TRAINER.MVLPT.VPT.CSC = False  # class-specific context
     cfg.TRAINER.MVLPT.VPT.CTX_INIT = ""  # initialization words
     cfg.TRAINER.MVLPT.VPT.DROPOUT = 0.0  # dropout
@@ -145,6 +145,11 @@ def extend_cfg(cfg):
     cfg.TRAINER.MVLPT.COOP.CSC = False  # class-specific context
     cfg.TRAINER.MVLPT.COOP.CTX_INIT = ""  # initialization words
     cfg.TRAINER.MVLPT.COOP.CLASS_TOKEN_POSITION = "middle"  # 'middle' or 'end' or 'front'
+
+    cfg.TRAINER.MVLPT.COCOOP = CN()
+    cfg.TRAINER.MVLPT.COCOOP.N_CTX = 0  # number of context vectors
+    cfg.TRAINER.MVLPT.COCOOP.CTX_INIT = ""  # initialization words
+    cfg.TRAINER.MVLPT.COCOOP.PREC = "fp16"  # fp16, fp32, amp
 
     cfg.DATASET.SUBSAMPLE_CLASSES = "all"  # all, base or new
     cfg.DATASET.NUM_SAMPLES_PER_CLASS = 20
