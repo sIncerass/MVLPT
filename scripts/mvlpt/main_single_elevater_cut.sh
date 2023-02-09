@@ -22,11 +22,11 @@ SHOTS=$4  # number of shots (5, 20, 50)
 # PRETRAIN_DATASET="Caltech101,Food101,StanfordCars,OxfordPets,OxfordFlowers,FGVCAircraft,SUN397,DescribableTextures,EuroSAT,UCF101"
 PRETRAIN_DATASET="ImageNet,Caltech101,Food101,StanfordCars,OxfordPets,OxfordFlowers,FGVCAircraft,SUN397,DescribableTextures,EuroSAT,UCF101"
 # PRETRAIN_DATASET="hateful-memes,cifar-10,mnist,oxford-flower-102,oxford-iiit-pets,resisc45_clip,country211,food-101,stanford-cars,caltech-101,dtd,voc-2007-classification,cifar-100,patch-camelyon,rendered-sst2,gtsrb,eurosat_clip,fer-2013,kitti-distance"
-DATASET=$5
+DATASET=$6
 MODEL_DIR="--model-dir ${output_dir}/${PRETRAIN_DATASET}/${TRAINER}/${CFG}_${SHOTS}shots/nctx${NCTX}_csc${CSC}_ctp/"
-for SEED in 1 2 3
+# for SEED in 1 2 3
 # for SEED in 1
-# for SEED in $5
+for SEED in $5
 do
     DIR=$output_dir/${DATASET}/${TRAINER}/${CFG}_${SHOTS}shots/nctx${NCTX}_csc${CSC}_ctp${CTP}/seed${SEED}
     # if [ -d "$DIR" ]; then
